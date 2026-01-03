@@ -1,0 +1,235 @@
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
+
+const StockDashboard = () => {
+  const [symbol, setSymbol] = useState('AAPL');
+  const [stockData, setStockData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [prediction, setPrediction] = useState(null);
+  const [currentPrice, setCurrentPrice] = useState(null);
+
+  const fetchStockData = async () => {
+    setLoading(true);
+    try {
+      // Usando Yahoo Finance API alternativa (através de proxy público)
+      const response = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1mo&interval=1d`
+      );
+      const data = await response.json();
+      
+      if (data.chart.result && data.chart.result[0]) {
+        const result = data.chart.result[0];
+        const timestamps = result.timestamp;
+        const prices = result.indicators.quote[0].close;
+        
+        const formattedData = timestamps.map((timestamp, index) => ({
+          date: new Date(timestamp * 1000).toLocaleDateString('pt-PT'),
+          price: prices[index]?.toFixed(2) || 0
+        })).filter(item => item.price > 0);
+        
+        setStockData(formattedData);
+        setCurrentPrice(prices[prices.length - 1]?.toFixed(2));
+        
+        // Simular previsão do modelo (aqui você integrará seu modelo real)
+        predictTrend(prices.slice(-10));
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados:', error);
+      alert('Erro ao buscar dados da ação. Tente outro símbolo.');
+    }
+    setLoading(false);
+  };
+
+  const predictTrend = async (recentPrices) => {
+    // Aqui você pode integrar seu modelo preditivo
+    // Por enquanto, vou simular uma previsão baseada em tendência simples
+    
+    // Exemplo de como enviar dados para seu modelo:
+    // const modelData = {
+    //   prices: recentPrices,
+    //   symbol: symbol
+    // };
+    
+    // const response = await fetch('URL_DO_SEU_MODELO', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(modelData)
+    // });
+    
+    // const prediction = await response.json();
+    
+    // Simulação simples de tendência
+    const validPrices = recentPrices.filter(p => p !== null && p !== undefined);
+    if (validPrices.length < 2) return;
+    
+    const firstPrice = validPrices[0];
+    const lastPrice = validPrices[validPrices.length - 1];
+    const trend = ((lastPrice - firstPrice) / firstPrice) * 100;
+    
+    const confidence = Math.min(Math.abs(trend) * 10, 95);
+    
+    setPrediction({
+      trend: trend > 0 ? 'positiva' : 'negativa',
+      confidence: confidence.toFixed(1),
+      change: trend.toFixed(2)
+    });
+  };
+
+  useEffect(() => {
+    fetchStockData();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-6">
+          Dashboard de Análise Preditiva
+        </h1>
+        
+        <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+          <div className="flex gap-4 mb-4">
+            <input
+              type="text"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              placeholder="Símbolo (ex: AAPL)"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              onClick={fetchStockData}
+              disabled={loading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+            >
+              {loading ? 'Carregando...' : 'Analisar'}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Gráfico - Lado Esquerdo */}
+          <div className="lg:col-span-2 bg-white rounded-lg shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              Histórico de Preços - {symbol}
+            </h2>
+            {stockData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={stockData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke="#2563eb" 
+                    strokeWidth={2}
+                    name="Preço (USD)"
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[400px] flex items-center justify-center text-gray-400">
+                <Activity size={48} />
+              </div>
+            )}
+          </div>
+
+          {/* Previsão - Lado Direito */}
+          <div className="bg-white rounded-lg shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              Análise Preditiva
+            </h2>
+            
+            {currentPrice && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Preço Atual</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  ${currentPrice}
+                </p>
+              </div>
+            )}
+
+            {prediction ? (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg ${
+                  prediction.trend === 'positiva' 
+                    ? 'bg-green-50 border border-green-200' 
+                    : 'bg-red-50 border border-red-200'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {prediction.trend === 'positiva' ? (
+                      <TrendingUp className="text-green-600" size={24} />
+                    ) : (
+                      <TrendingDown className="text-red-600" size={24} />
+                    )}
+                    <span className={`text-lg font-semibold ${
+                      prediction.trend === 'positiva' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      Tendência {prediction.trend.charAt(0).toUpperCase() + prediction.trend.slice(1)}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-gray-700 mb-3">
+                    Com base no modelo treinado e nos dados atuais, o mercado 
+                    apresenta um viés direcional <strong>{prediction.trend}</strong>.
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Variação:</span>
+                      <span className={`font-semibold ${
+                        parseFloat(prediction.change) > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {prediction.change}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Confiança:</span>
+                      <span className="font-semibold text-gray-800">
+                        {prediction.confidence}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                  <p className="font-semibold mb-2">⚠️ Aviso Importante:</p>
+                  <p>
+                    Esta análise é baseada em dados históricos e não constitui 
+                    aconselhamento financeiro. Consulte sempre um profissional 
+                    qualificado antes de tomar decisões de investimento.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-8">
+                <Activity size={48} className="mx-auto mb-3" />
+                <p>Carregue dados para ver a previsão</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer com informações adicionais */}
+        <div className="mt-6 bg-white rounded-lg shadow-xl p-4">
+          <p className="text-sm text-gray-600 text-center">
+            <strong>Nota:</strong> Para integrar seu modelo preditivo real, 
+            substitua a função <code className="bg-gray-100 px-2 py-1 rounded">predictTrend()</code> 
+            pela chamada à API do seu modelo. Os dados da ação são enviados automaticamente.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StockDashboard;
