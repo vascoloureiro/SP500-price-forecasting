@@ -1,0 +1,54 @@
+{
+    "model_type": "XGBoost",
+    "model_class": "XGBClassifier",
+    "features": [
+        "Return_1d",
+        "Return_5d",
+        "Return_10d",
+        "SMA_Cross_5_20",
+        "SMA_Cross_10_50",
+        "RSI_14",
+        "BB_Position",
+        "MACD_Diff",
+        "Volume_Ratio",
+        "Volatility_5d",
+        "Volatility_20d",
+        "Daily_Range",
+        "Daily_Range_MA",
+        "Trend",
+        "Noise",
+        "Volatility"
+    ],
+    "n_features": 16,
+    "target": "Target_Binary",
+    "target_description": "Classificação binária: 1=Sobe, 0=Desce",
+    "training_samples": 7712,
+    "test_samples": 1928,
+    "metrics": {
+        "accuracy": 0.5300829875518672,
+        "balanced_accuracy": 0.5264668807846388,
+        "f1_score": 0.5710227272727273,
+        "auc_roc": 0.5269395807431966
+    },
+    "training_period": {
+        "start": "2021-03-24",
+        "end": "2025-01-23"
+    },
+    "test_period": {
+        "start": "2025-01-24",
+        "end": "2026-01-08"
+    },
+    "stocks": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "NFLX"
+    ],
+    "data_split": "80% treino / 20% teste (temporal)",
+    "timestamp": "20260111_004550",
+    "export_date": "2026-01-11 00:45:51.646831"
+}

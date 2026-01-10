@@ -1,0 +1,39 @@
+
+# Instruções de Uso do Modelo
+
+## Arquivos gerados:
+1. models/rf_binary_classifier_20260111_004550.pkl - Modelo Random Forest treinado
+2. models/scaler_20260111_004550.pkl - Scaler para normalização
+3. models/model_metadata_20260111_004550.json - Metadados e configuração
+
+## Como carregar o modelo:
+```python
+import joblib
+import pandas as pd
+
+# Carregar modelo e scaler
+model = joblib.load('models/rf_binary_classifier_20260111_004550.pkl')
+scaler = joblib.load('models/scaler_20260111_004550.pkl')
+
+# Features necessárias (na ordem correta):
+features = ['Return_1d', 'Return_5d', 'Return_10d', 'SMA_Cross_5_20', 'SMA_Cross_10_50', 'RSI_14', 'BB_Position', 'MACD_Diff', 'Volume_Ratio', 'Volatility_5d', 'Volatility_20d', 'Daily_Range', 'Daily_Range_MA', 'Trend', 'Noise', 'Volatility']
+
+# Fazer previsão com novos dados:
+# 1. Preparar DataFrame com as features
+# X_new = pd.DataFrame(...)  # seus novos dados
+
+# 2. Normalizar
+# X_new_scaled = scaler.transform(X_new[features])
+
+# 3. Prever
+# predictions = model.predict(X_new_scaled)
+# probabilities = model.predict_proba(X_new_scaled)[:, 1]
+```
+
+## Métricas do Modelo:
+- Balanced Accuracy: 0.5265
+- F1-Score: 0.5710
+- AUC-ROC: 0.5269
+
+## Período de Treino: 2021-03-24 a 2025-01-23
+## Período de Teste: 2025-01-24 a 2026-01-08
