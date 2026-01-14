@@ -10,16 +10,13 @@ import os
 
 from schemas import PredictionInput
 
-# Obter o diretório base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODELS_DIR = BASE_DIR / "models"
 
-# Caminhos dos ficheiros do modelo
 MODEL_PATH = MODELS_DIR / "rf_binary_classifier_20260111_004550.pkl"
 SCALER_PATH = MODELS_DIR / "scaler_20260111_004550.pkl"
 METADATA_PATH = MODELS_DIR / "model_metadata_20260111_004550.json"
 
-# Verificar se os ficheiros existem
 def verify_files():
     """Verifica se todos os ficheiros necessários existem"""
     missing_files = []
@@ -39,7 +36,6 @@ def verify_files():
         error_msg += f"\nDiretório atual: {os.getcwd()}"
         raise FileNotFoundError(error_msg)
 
-# Verificar ficheiros antes de carregar
 verify_files()
 
 # Carregar modelo, scaler e metadata
@@ -50,17 +46,17 @@ with open(METADATA_PATH, "r") as f:
     metadata = json.load(f)
 features = metadata["features"]
 
-print(f"✓ Modelo carregado com sucesso!")
-print(f"✓ Features: {len(features)}")
+print(f"Modelo carregado com sucesso!")
+print(f"Features: {len(features)}")
 
-# Criar FastAPI app
+# FastAPI app
 app = FastAPI(
-    title="ML Trading Predictor API",
+    title="ML API",
     description="API para previsão de movimentos de mercado usando Random Forest",
     version="1.0.0"
 )
 
-# Adicionar CORS (opcional, útil para frontend)
+# Adicionar CORS 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -73,7 +69,7 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {
-        "message": "API de Predição ML está online",
+        "message": "ML API está online",
         "status": "running",
         "endpoints": {
             "/predict": "POST - Fazer predição",
@@ -84,20 +80,10 @@ def read_root():
     }
 
 
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "scaler_loaded": scaler is not None,
-        "features_count": len(features)
-    }
-
-
 @app.post("/predict")
 def predict(data: PredictionInput):
     """
-    Endpoint para fazer predições
+    Endpoint para fazer previsões
     
     Retorna:
     - prediction: 0 (Desce) ou 1 (Sobe)
@@ -106,11 +92,10 @@ def predict(data: PredictionInput):
     - probability_down: Probabilidade de descida
     """
     try:
-        # Criar DataFrame com as features
+        # DataFrame com as features
         X_new = pd.DataFrame([{feat: 0 for feat in features}])
         
-        # Preencher com os valores recebidos
-        input_dict = data.model_dump()  # Usar model_dump() em vez de dict()
+        input_dict = data.model_dump()  
         for key, value in input_dict.items():
             if key in features:
                 X_new.loc[0, key] = value
@@ -118,7 +103,7 @@ def predict(data: PredictionInput):
         # Escalar features
         X_scaled = scaler.transform(X_new[features])
         
-        # Fazer predição
+        # Usar Modelo para fazer previsões
         pred = int(model.predict(X_scaled)[0])
         prob = float(model.predict_proba(X_scaled)[0, 1])
         
@@ -178,6 +163,8 @@ def get_decomposition():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
 @app.get("/model-info")
 def get_model_info():
     """Retorna informações sobre o modelo e features necessárias"""
@@ -195,9 +182,9 @@ def get_model_info():
 if __name__ == "__main__":
     import uvicorn
     print("\n" + "="*50)
-    print("🚀 A iniciar ML Trading Predictor API")
+    print("A iniciar ML API")
     print("="*50)
-    print("📍 URL: http://localhost:8000")
-    print("📚 Docs: http://localhost:8000/docs")
+    print("URL: http://localhost:8000")
+    print("Docs: http://localhost:8000/docs")
     print("="*50 + "\n")
     uvicorn.run(app, host="127.0.0.1", port=8000)
